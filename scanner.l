@@ -1,7 +1,5 @@
 %{
-/* Forward declaration to keep the compiler happy */
 typedef struct Node Node;
-
 #include "parser.tab.h"
 #include <stdlib.h>
 #include <string.h>
@@ -24,6 +22,8 @@ WS      [ \t\r\n]+
 ">="      { return GE; }
 "<"       { return LT; }
 ">"       { return GT; }
+
+\"[^"]*\" { yylval.str = strdup(yytext); return STRING; }
 
 {ID}      { yylval.id = strdup(yytext); return ID; }
 {DIGIT}+  { yylval.num = atoi(yytext); return NUMBER; }

@@ -3,12 +3,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-
+/* --- SYMBOL TABLE --- */
 struct Symbol {
     char *name;
     struct Symbol *next;
 };
-
 struct Symbol *symbol_table = NULL;
 
 void add_symbol(char *name) {
@@ -16,32 +15,29 @@ void add_symbol(char *name) {
     while (ptr != NULL) {
         if (strcmp(ptr->name, name) == 0) {
             printf("Error: Variable '%s' is already declared!\n", name);
-            exit(1); // Stop compilation on re-declaration
+            exit(1);
         }
         ptr = ptr->next;
     }
-    
     struct Symbol *new_sym = (struct Symbol *)malloc(sizeof(struct Symbol));
     new_sym->name = strdup(name);
     new_sym->next = symbol_table;
     symbol_table = new_sym;
 }
 
-
 void check_declared(char *name) {
     struct Symbol *ptr = symbol_table;
     while (ptr != NULL) {
-        if (strcmp(ptr->name, name) == 0) {
-            return; // Found it, all good
-        }
+        if (strcmp(ptr->name, name) == 0) return;
         ptr = ptr->next;
     }
     printf("Semantic Error: Variable '%s' used but not declared.\n", name);
-    exit(1); 
+    exit(1);
 }
 
-/* --- NODE STRUCTURE DEFINITION --- */
-typedef enum { N_DECL, N_ASSIGN, N_PRINT, N_IF, N_BINOP, N_NUM, N_ID, N_STMTLIST } NodeType;
+/* --- NODE DEFINITIONS --- */
+/* NEW: Added N_PRINT_STR for printing strings */
+typedef enum { N_DECL, N_ASSIGN, N_PRINT, N_PRINT_STR, N_IF, N_BINOP, N_NUM, N_ID, N_STMTLIST } NodeType;
 
 typedef struct Node {
     NodeType type;
@@ -52,12 +48,11 @@ typedef struct Node {
     struct Node *next;
 } Node;
 
-/* Forward declarations */
 void yyerror(const char *s);
 int yylex(void);
 extern FILE *yyin;
 
-/* Helper Function Prototypes */
+/* Helper Functions */
 Node* mknode(NodeType t, const char *s, int val, Node *l, Node *r);
 Node* append_stmt(Node *head, Node *stmt);
 void print_tree_visual(Node *n, int depth, int is_last, int mask);
@@ -68,17 +63,19 @@ void generate_target_code(Node *stmts);
 %union {
     int num;
     char *id;
+    char *str;   /* NEW: Helper for string literals */
     Node *node;  
 }
 
 %token <num> NUMBER
 %token <id> ID
+%token <str> STRING /* NEW: String token */
 %token INT PRINT IF ELSE
 
-/* Comparison Tokens */
 %token EQ NEQ LT GT LE GE
 
 /* PRECEDENCE */
+%right '='            
 %left EQ NEQ
 %left LT GT LE GE
 %left '+' '-'
@@ -91,11 +88,9 @@ void generate_target_code(Node *stmts);
 
 program:
     stmt_list {
-        /* If we reached here without exiting, semantic checks passed */
         printf("\n--- VISUAL PARSE TREE ---\n");
         print_tree_visual($1 ? mknode(N_STMTLIST, NULL, 0, $1, NULL) : NULL, 0, 1, 0);
         printf("-------------------------\n\n");
-
         generate_target_code($1);
     }
     ;
@@ -106,33 +101,32 @@ stmt_list:
     ;
 
 statement:
-      /* DECLARATION: Add to symbol table */
       INT ID ';' { 
-          add_symbol($2); /* SAVE IT */
+          add_symbol($2); 
           $$ = mknode(N_DECL, $2, 0, NULL, NULL); 
           free($2); 
       }
     | INT ID '=' expr ';' { 
-          add_symbol($2); /* SAVE IT */
+          add_symbol($2); 
           $$ = mknode(N_DECL, $2, 0, $4, NULL); 
           free($2); 
       }
-    /* ASSIGNMENT: Check if it exists */
-    | ID '=' expr ';' { 
-          check_declared($1); /* CHECK IT */
-          $$ = mknode(N_ASSIGN, $1, 0, $3, NULL); 
-          free($1); 
+    | expr ';' { 
+          $$ = $1; 
       }
+    /* OLD: Print Number */
     | PRINT '(' expr ')' ';' { $$ = mknode(N_PRINT, NULL, 0, $3, NULL); }
+    /* NEW: Print String */
+    | PRINT '(' STRING ')' ';' { 
+          $$ = mknode(N_PRINT_STR, $3, 0, NULL, NULL); 
+          /* We don't free($3) here because we store it in the node */
+      }
     | IF '(' expr ')' block {
-          Node *then_block = $5;
-          $$ = mknode(N_IF, NULL, 0, $3, then_block);
+          $$ = mknode(N_IF, NULL, 0, $3, $5);
       }
     | IF '(' expr ')' block ELSE block {
-          Node *then_block = $5;
-          Node *else_block = $7;
-          Node *ifn = mknode(N_IF, NULL, 0, $3, then_block);
-          ifn->next = else_block;
+          Node *ifn = mknode(N_IF, NULL, 0, $3, $5);
+          ifn->next = $7;
           $$ = ifn;
       }
     ;
@@ -142,7 +136,12 @@ block:
     ;
 
 expr:
-      expr '+' expr { $$ = mknode(N_BINOP, "+", 0, $1, $3); }
+      ID '=' expr { 
+          check_declared($1); 
+          $$ = mknode(N_ASSIGN, $1, 0, $3, NULL); 
+          free($1); 
+      }
+    | expr '+' expr { $$ = mknode(N_BINOP, "+", 0, $1, $3); }
     | expr '-' expr { $$ = mknode(N_BINOP, "-", 0, $1, $3); }
     | expr '*' expr { $$ = mknode(N_BINOP, "*", 0, $1, $3); }
     | expr '/' expr { $$ = mknode(N_BINOP, "/", 0, $1, $3); }
@@ -155,9 +154,8 @@ expr:
     | '-' expr %prec UMINUS { $$ = mknode(N_BINOP, "neg", 0, $2, NULL); }
     | '(' expr ')' { $$ = $2; }
     | NUMBER { $$ = mknode(N_NUM, NULL, $1, NULL, NULL); }
-    /* VARIABLE USE: Check if it exists */
     | ID { 
-          check_declared($1); /* CHECK IT */
+          check_declared($1); 
           $$ = mknode(N_ID, $1, 0, NULL, NULL); 
           free($1); 
       }
@@ -187,7 +185,7 @@ Node* append_stmt(Node *head, Node *stmt) {
     return head;
 }
 
-/* --- VISUAL TREE PRINTER (Safe Mode) --- */
+/* --- VISUAL TREE PRINTER --- */
 void print_branch(int depth, int is_last, int mask) {
     for (int i = 0; i < depth - 1; i++) {
         if (mask & (1 << i)) printf("|   ");
@@ -205,8 +203,10 @@ void print_tree_visual(Node *n, int depth, int is_last, int mask) {
     
     switch (n->type) {
         case N_DECL:    printf("DECL (%s)\n", n->sval); break;
-        case N_ASSIGN:  printf("ASSIGN (=)\n"); break;
-        case N_PRINT:   printf("PRINT\n"); break;
+        case N_ASSIGN:  printf("ASSIGN (=) %s\n", n->sval); break;
+        case N_PRINT:   printf("PRINT (Expr)\n"); break;
+        /* NEW: Visual for String Print */
+        case N_PRINT_STR: printf("PRINT (String): %s\n", n->sval); break;
         case N_IF:      printf("IF\n"); break;
         case N_BINOP:   printf("OP (%s)\n", n->sval); break;
         case N_NUM:     printf("NUM (%d)\n", n->ival); break;
@@ -242,6 +242,11 @@ void gen_expr(FILE *out, Node *n) {
     switch (n->type) {
         case N_NUM: fprintf(out, "%d", n->ival); break;
         case N_ID: fprintf(out, "%s", n->sval); break;
+        case N_ASSIGN:
+            fprintf(out, "(%s = ", n->sval);
+            gen_expr(out, n->left);
+            fprintf(out, ")");
+            break;
         case N_BINOP:
             fprintf(out, "("); 
             gen_expr(out, n->left);
@@ -266,11 +271,13 @@ void gen_stmt(FILE *out, Node *s, int indent) {
             }
             fprintf(out, ";\n");
             break;
-        case N_ASSIGN:
-            fprintf(out, "%s = ", s->sval);
-            gen_expr(out, s->left); fprintf(out, ";\n"); break;
         case N_PRINT:
+            /* Standard integer print */
             fprintf(out, "printf(\"%%d\\n\", "); gen_expr(out, s->left); fprintf(out, ");\n");
+            break;
+        case N_PRINT_STR:
+            /* NEW: String print (sval already contains the quotes "...") */
+            fprintf(out, "printf(\"%%s\\n\", %s);\n", s->sval);
             break;
         case N_IF:
             fprintf(out, "if ("); gen_expr(out, s->left); fprintf(out, ") {\n");
@@ -285,7 +292,12 @@ void gen_stmt(FILE *out, Node *s, int indent) {
                 for (int i = 0; i < indent; i++) fprintf(out, "    "); fprintf(out, "}\n");
             } else fprintf(out, "\n");
             break;
-        default: break;
+        case N_STMTLIST: 
+             break;
+        default:
+            gen_expr(out, s);
+            fprintf(out, ";\n");
+            break;
     }
 }
 
@@ -293,7 +305,7 @@ void execute_generated_code() {
     printf("\n--- EXECUTION RESULTS ---\n");
     int compile_status = system("gcc output.c -o program");
     if (compile_status != 0) {
-        printf("Error: Compilation failed. Make sure GCC is installed.\n");
+        printf("Error: Compilation failed.\n");
         return;
     }
     int run_status = system("program > result.txt");
@@ -307,8 +319,6 @@ void execute_generated_code() {
         } else {
             printf("Error reading result.txt\n");
         }
-    } else {
-        printf("Error: Runtime error or executable not found.\n");
     }
     printf("-------------------------\n");
 }

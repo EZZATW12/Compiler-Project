@@ -1,8 +1,9 @@
 int _joo = 5 * 12;
 int ezzat = 6 * 12 ;
-int ezzat = 5;
-if(_joo > ezzat){
-    print(_joo);
+if(_joo == ezzat){
+    print("ezzat");
 }else{
-    print(ezzat);
+    print("youssef");
+    print("youssef");
+    print("youssef");
 }

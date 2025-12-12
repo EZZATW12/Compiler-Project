@@ -1,0 +1,8 @@
+int _joo = 5 * 12;
+int ezzat = 6 * 12 ;
+int ezzat = 5;
+if(_joo > ezzat){
+    print(_joo);
+}else{
+    print(ezzat);
+}

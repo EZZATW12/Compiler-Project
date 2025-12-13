@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* --- SYMBOL TABLE --- */
+
 struct Symbol {
     char *name;
     struct Symbol *next;
@@ -35,8 +35,8 @@ void check_declared(char *name) {
     exit(1);
 }
 
-/* --- NODE DEFINITIONS --- */
-/* NEW: Added N_PRINT_STR for printing strings */
+
+
 typedef enum { N_DECL, N_ASSIGN, N_PRINT, N_PRINT_STR, N_IF, N_BINOP, N_NUM, N_ID, N_STMTLIST } NodeType;
 
 typedef struct Node {
@@ -52,7 +52,7 @@ void yyerror(const char *s);
 int yylex(void);
 extern FILE *yyin;
 
-/* Helper Functions */
+
 Node* mknode(NodeType t, const char *s, int val, Node *l, Node *r);
 Node* append_stmt(Node *head, Node *stmt);
 void print_tree_visual(Node *n, int depth, int is_last, int mask);
@@ -63,18 +63,17 @@ void generate_target_code(Node *stmts);
 %union {
     int num;
     char *id;
-    char *str;   /* NEW: Helper for string literals */
+    char *str;   
     Node *node;  
 }
 
 %token <num> NUMBER
 %token <id> ID
-%token <str> STRING /* NEW: String token */
+%token <str> STRING 
 %token INT PRINT IF ELSE
 
 %token EQ NEQ LT GT LE GE
 
-/* PRECEDENCE */
 %right '='            
 %left EQ NEQ
 %left LT GT LE GE
@@ -114,9 +113,9 @@ statement:
     | expr ';' { 
           $$ = $1; 
       }
-    /* OLD: Print Number */
+
     | PRINT '(' expr ')' ';' { $$ = mknode(N_PRINT, NULL, 0, $3, NULL); }
-    /* NEW: Print String */
+    
     | PRINT '(' STRING ')' ';' { 
           $$ = mknode(N_PRINT_STR, $3, 0, NULL, NULL); 
           /* We don't free($3) here because we store it in the node */
@@ -163,7 +162,7 @@ expr:
 
 %%
 
-/* --- C CODE IMPLEMENTATION --- */
+
 
 Node* mknode(NodeType t, const char *s, int val, Node *l, Node *r) {
     Node *n = malloc(sizeof(Node));
@@ -185,7 +184,7 @@ Node* append_stmt(Node *head, Node *stmt) {
     return head;
 }
 
-/* --- VISUAL TREE PRINTER --- */
+
 void print_branch(int depth, int is_last, int mask) {
     for (int i = 0; i < depth - 1; i++) {
         if (mask & (1 << i)) printf("|   ");
@@ -236,7 +235,7 @@ void print_tree_visual(Node *n, int depth, int is_last, int mask) {
     }
 }
 
-/* --- TARGET CODE GENERATOR --- */
+
 void gen_expr(FILE *out, Node *n) {
     if (!n) return;
     switch (n->type) {
@@ -248,11 +247,18 @@ void gen_expr(FILE *out, Node *n) {
             fprintf(out, ")");
             break;
         case N_BINOP:
-            fprintf(out, "("); 
-            gen_expr(out, n->left);
-            fprintf(out, " %s ", n->sval);
-            gen_expr(out, n->right); 
-            fprintf(out, ")");
+            if (strcmp(n->sval, "neg") == 0) {
+                fprintf(out, "(-");       // Print the minus sign FIRST
+                gen_expr(out, n->left);   // Then print the number
+                fprintf(out, ")");
+            } 
+            else {
+                fprintf(out, "("); 
+                gen_expr(out, n->left);
+                fprintf(out, " %s ", n->sval);
+                gen_expr(out, n->right); 
+                fprintf(out, ")");
+            }
             break;
         default: break;
     }

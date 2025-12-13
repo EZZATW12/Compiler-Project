@@ -1651,3 +1651,6 @@ int main()
 
 
 int yywrap() { return 1; }
+/*
+ Flex calls this function automatically whenever it reaches the end of the input file (EOF). 
+*/

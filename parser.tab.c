@@ -73,7 +73,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* --- SYMBOL TABLE --- */
+
 struct Symbol {
     char *name;
     struct Symbol *next;
@@ -105,8 +105,8 @@ void check_declared(char *name) {
     exit(1);
 }
 
-/* --- NODE DEFINITIONS --- */
-/* NEW: Added N_PRINT_STR for printing strings */
+
+
 typedef enum { N_DECL, N_ASSIGN, N_PRINT, N_PRINT_STR, N_IF, N_BINOP, N_NUM, N_ID, N_STMTLIST } NodeType;
 
 typedef struct Node {
@@ -122,7 +122,7 @@ void yyerror(const char *s);
 int yylex(void);
 extern FILE *yyin;
 
-/* Helper Functions */
+
 Node* mknode(NodeType t, const char *s, int val, Node *l, Node *r);
 Node* append_stmt(Node *head, Node *stmt);
 void print_tree_visual(Node *n, int depth, int is_last, int mask);
@@ -577,9 +577,9 @@ static const yytype_int8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,    90,    90,    99,   100,   104,   109,   114,   118,   120,
-     124,   127,   135,   139,   144,   145,   146,   147,   148,   149,
-     150,   151,   152,   153,   154,   155,   156,   157
+       0,    89,    89,    98,    99,   103,   108,   113,   117,   119,
+     123,   126,   134,   138,   143,   144,   145,   146,   147,   148,
+     149,   150,   151,   152,   153,   154,   155,   156
 };
 #endif
 
@@ -1186,7 +1186,7 @@ yyreduce:
   switch (yyn)
     {
   case 2: /* program: stmt_list  */
-#line 90 "parser.y"
+#line 89 "parser.y"
               {
         printf("\n--- VISUAL PARSE TREE ---\n");
         print_tree_visual((yyvsp[0].node) ? mknode(N_STMTLIST, NULL, 0, (yyvsp[0].node), NULL) : NULL, 0, 1, 0);
@@ -1197,19 +1197,19 @@ yyreduce:
     break;
 
   case 3: /* stmt_list: %empty  */
-#line 99 "parser.y"
+#line 98 "parser.y"
                   { (yyval.node) = NULL; }
 #line 1203 "parser.tab.c"
     break;
 
   case 4: /* stmt_list: stmt_list statement  */
-#line 100 "parser.y"
+#line 99 "parser.y"
                           { (yyval.node) = (yyvsp[-1].node) ? append_stmt((yyvsp[-1].node), (yyvsp[0].node)) : (yyvsp[0].node); }
 #line 1209 "parser.tab.c"
     break;
 
   case 5: /* statement: INT ID ';'  */
-#line 104 "parser.y"
+#line 103 "parser.y"
                  { 
           add_symbol((yyvsp[-1].id)); 
           (yyval.node) = mknode(N_DECL, (yyvsp[-1].id), 0, NULL, NULL); 
@@ -1219,7 +1219,7 @@ yyreduce:
     break;
 
   case 6: /* statement: INT ID '=' expr ';'  */
-#line 109 "parser.y"
+#line 108 "parser.y"
                           { 
           add_symbol((yyvsp[-3].id)); 
           (yyval.node) = mknode(N_DECL, (yyvsp[-3].id), 0, (yyvsp[-1].node), NULL); 
@@ -1229,7 +1229,7 @@ yyreduce:
     break;
 
   case 7: /* statement: expr ';'  */
-#line 114 "parser.y"
+#line 113 "parser.y"
                { 
           (yyval.node) = (yyvsp[-1].node); 
       }
@@ -1237,13 +1237,13 @@ yyreduce:
     break;
 
   case 8: /* statement: PRINT '(' expr ')' ';'  */
-#line 118 "parser.y"
+#line 117 "parser.y"
                              { (yyval.node) = mknode(N_PRINT, NULL, 0, (yyvsp[-2].node), NULL); }
 #line 1243 "parser.tab.c"
     break;
 
   case 9: /* statement: PRINT '(' STRING ')' ';'  */
-#line 120 "parser.y"
+#line 119 "parser.y"
                                { 
           (yyval.node) = mknode(N_PRINT_STR, (yyvsp[-2].str), 0, NULL, NULL); 
           /* We don't free($3) here because we store it in the node */
@@ -1252,7 +1252,7 @@ yyreduce:
     break;
 
   case 10: /* statement: IF '(' expr ')' block  */
-#line 124 "parser.y"
+#line 123 "parser.y"
                             {
           (yyval.node) = mknode(N_IF, NULL, 0, (yyvsp[-2].node), (yyvsp[0].node));
       }
@@ -1260,7 +1260,7 @@ yyreduce:
     break;
 
   case 11: /* statement: IF '(' expr ')' block ELSE block  */
-#line 127 "parser.y"
+#line 126 "parser.y"
                                        {
           Node *ifn = mknode(N_IF, NULL, 0, (yyvsp[-4].node), (yyvsp[-2].node));
           ifn->next = (yyvsp[0].node);
@@ -1270,13 +1270,13 @@ yyreduce:
     break;
 
   case 12: /* block: '{' stmt_list '}'  */
-#line 135 "parser.y"
+#line 134 "parser.y"
                         { (yyval.node) = mknode(N_STMTLIST, NULL, 0, (yyvsp[-1].node), NULL); }
 #line 1276 "parser.tab.c"
     break;
 
   case 13: /* expr: ID '=' expr  */
-#line 139 "parser.y"
+#line 138 "parser.y"
                   { 
           check_declared((yyvsp[-2].id)); 
           (yyval.node) = mknode(N_ASSIGN, (yyvsp[-2].id), 0, (yyvsp[0].node), NULL); 
@@ -1286,85 +1286,85 @@ yyreduce:
     break;
 
   case 14: /* expr: expr '+' expr  */
-#line 144 "parser.y"
+#line 143 "parser.y"
                     { (yyval.node) = mknode(N_BINOP, "+", 0, (yyvsp[-2].node), (yyvsp[0].node)); }
 #line 1292 "parser.tab.c"
     break;
 
   case 15: /* expr: expr '-' expr  */
-#line 145 "parser.y"
+#line 144 "parser.y"
                     { (yyval.node) = mknode(N_BINOP, "-", 0, (yyvsp[-2].node), (yyvsp[0].node)); }
 #line 1298 "parser.tab.c"
     break;
 
   case 16: /* expr: expr '*' expr  */
-#line 146 "parser.y"
+#line 145 "parser.y"
                     { (yyval.node) = mknode(N_BINOP, "*", 0, (yyvsp[-2].node), (yyvsp[0].node)); }
 #line 1304 "parser.tab.c"
     break;
 
   case 17: /* expr: expr '/' expr  */
-#line 147 "parser.y"
+#line 146 "parser.y"
                     { (yyval.node) = mknode(N_BINOP, "/", 0, (yyvsp[-2].node), (yyvsp[0].node)); }
 #line 1310 "parser.tab.c"
     break;
 
   case 18: /* expr: expr EQ expr  */
-#line 148 "parser.y"
+#line 147 "parser.y"
                     { (yyval.node) = mknode(N_BINOP, "==", 0, (yyvsp[-2].node), (yyvsp[0].node)); }
 #line 1316 "parser.tab.c"
     break;
 
   case 19: /* expr: expr NEQ expr  */
-#line 149 "parser.y"
+#line 148 "parser.y"
                     { (yyval.node) = mknode(N_BINOP, "!=", 0, (yyvsp[-2].node), (yyvsp[0].node)); }
 #line 1322 "parser.tab.c"
     break;
 
   case 20: /* expr: expr LT expr  */
-#line 150 "parser.y"
+#line 149 "parser.y"
                     { (yyval.node) = mknode(N_BINOP, "<", 0, (yyvsp[-2].node), (yyvsp[0].node)); }
 #line 1328 "parser.tab.c"
     break;
 
   case 21: /* expr: expr GT expr  */
-#line 151 "parser.y"
+#line 150 "parser.y"
                     { (yyval.node) = mknode(N_BINOP, ">", 0, (yyvsp[-2].node), (yyvsp[0].node)); }
 #line 1334 "parser.tab.c"
     break;
 
   case 22: /* expr: expr LE expr  */
-#line 152 "parser.y"
+#line 151 "parser.y"
                     { (yyval.node) = mknode(N_BINOP, "<=", 0, (yyvsp[-2].node), (yyvsp[0].node)); }
 #line 1340 "parser.tab.c"
     break;
 
   case 23: /* expr: expr GE expr  */
-#line 153 "parser.y"
+#line 152 "parser.y"
                     { (yyval.node) = mknode(N_BINOP, ">=", 0, (yyvsp[-2].node), (yyvsp[0].node)); }
 #line 1346 "parser.tab.c"
     break;
 
   case 24: /* expr: '-' expr  */
-#line 154 "parser.y"
+#line 153 "parser.y"
                             { (yyval.node) = mknode(N_BINOP, "neg", 0, (yyvsp[0].node), NULL); }
 #line 1352 "parser.tab.c"
     break;
 
   case 25: /* expr: '(' expr ')'  */
-#line 155 "parser.y"
+#line 154 "parser.y"
                    { (yyval.node) = (yyvsp[-1].node); }
 #line 1358 "parser.tab.c"
     break;
 
   case 26: /* expr: NUMBER  */
-#line 156 "parser.y"
+#line 155 "parser.y"
              { (yyval.node) = mknode(N_NUM, NULL, (yyvsp[0].num), NULL, NULL); }
 #line 1364 "parser.tab.c"
     break;
 
   case 27: /* expr: ID  */
-#line 157 "parser.y"
+#line 156 "parser.y"
          { 
           check_declared((yyvsp[0].id)); 
           (yyval.node) = mknode(N_ID, (yyvsp[0].id), 0, NULL, NULL); 
@@ -1567,10 +1567,10 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 164 "parser.y"
+#line 163 "parser.y"
 
 
-/* --- C CODE IMPLEMENTATION --- */
+
 
 Node* mknode(NodeType t, const char *s, int val, Node *l, Node *r) {
     Node *n = malloc(sizeof(Node));
@@ -1592,7 +1592,7 @@ Node* append_stmt(Node *head, Node *stmt) {
     return head;
 }
 
-/* --- VISUAL TREE PRINTER --- */
+
 void print_branch(int depth, int is_last, int mask) {
     for (int i = 0; i < depth - 1; i++) {
         if (mask & (1 << i)) printf("|   ");
@@ -1643,7 +1643,7 @@ void print_tree_visual(Node *n, int depth, int is_last, int mask) {
     }
 }
 
-/* --- TARGET CODE GENERATOR --- */
+
 void gen_expr(FILE *out, Node *n) {
     if (!n) return;
     switch (n->type) {
@@ -1655,11 +1655,18 @@ void gen_expr(FILE *out, Node *n) {
             fprintf(out, ")");
             break;
         case N_BINOP:
-            fprintf(out, "("); 
-            gen_expr(out, n->left);
-            fprintf(out, " %s ", n->sval);
-            gen_expr(out, n->right); 
-            fprintf(out, ")");
+            if (strcmp(n->sval, "neg") == 0) {
+                fprintf(out, "(-");       // Print the minus sign FIRST
+                gen_expr(out, n->left);   // Then print the number
+                fprintf(out, ")");
+            } 
+            else {
+                fprintf(out, "("); 
+                gen_expr(out, n->left);
+                fprintf(out, " %s ", n->sval);
+                gen_expr(out, n->right); 
+                fprintf(out, ")");
+            }
             break;
         default: break;
     }

@@ -80,7 +80,7 @@ union YYSTYPE
 
     int num;
     char *id;
-    char *str;   /* NEW: Helper for string literals */
+    char *str;   
     Node *node;  
 
 #line 87 "parser.tab.h"

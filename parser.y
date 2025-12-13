@@ -74,13 +74,13 @@ void generate_target_code(Node *stmts);
 
 %token EQ NEQ LT GT LE GE
 
-%right '='            
+%right '='       
 %left EQ NEQ
 %left LT GT LE GE
 %left '+' '-'
-%left '*' '/'
-%right UMINUS
-
+%left '*' '/' 
+%right UMINUS   
+  
 %type <node> expr statement stmt_list block
 
 %%
@@ -100,12 +100,12 @@ stmt_list:
     ;
 
 statement:
-      INT ID ';' { 
+      INT ID ';' { // int x ;
           add_symbol($2); 
           $$ = mknode(N_DECL, $2, 0, NULL, NULL); 
           free($2); 
       }
-    | INT ID '=' expr ';' { 
+    | INT ID '=' expr ';' {  // int x = 2 * 8 ;
           add_symbol($2); 
           $$ = mknode(N_DECL, $2, 0, $4, NULL); 
           free($2); 
@@ -118,18 +118,17 @@ statement:
     
     | PRINT '(' STRING ')' ';' { 
           $$ = mknode(N_PRINT_STR, $3, 0, NULL, NULL); 
-          /* We don't free($3) here because we store it in the node */
+        
       }
-    | IF '(' expr ')' block {
+    | IF '(' expr ')' block { // if(x < y){}
           $$ = mknode(N_IF, NULL, 0, $3, $5);
       }
-    | IF '(' expr ')' block ELSE block {
+    | IF '(' expr ')' block ELSE block {// if(x < y){}else{}
           Node *ifn = mknode(N_IF, NULL, 0, $3, $5);
           ifn->next = $7;
           $$ = ifn;
       }
     ;
-
 block:
       '{' stmt_list '}' { $$ = mknode(N_STMTLIST, NULL, 0, $2, NULL); }
     ;
@@ -149,8 +148,8 @@ expr:
     | expr LT expr  { $$ = mknode(N_BINOP, "<", 0, $1, $3); }
     | expr GT expr  { $$ = mknode(N_BINOP, ">", 0, $1, $3); }
     | expr LE expr  { $$ = mknode(N_BINOP, "<=", 0, $1, $3); }
-    | expr GE expr  { $$ = mknode(N_BINOP, ">=", 0, $1, $3); }
-    | '-' expr %prec UMINUS { $$ = mknode(N_BINOP, "neg", 0, $2, NULL); }
+    | expr GE expr  { $$ = mknode(N_BINOP, ">=", 0, $1, $3); } 
+    | '-' expr %prec UMINUS { $$ = mknode(N_BINOP, "neg", 0, $2, NULL); } // -(1 + 2 * 5)
     | '(' expr ')' { $$ = $2; }
     | NUMBER { $$ = mknode(N_NUM, NULL, $1, NULL, NULL); }
     | ID { 
@@ -247,7 +246,7 @@ void gen_expr(FILE *out, Node *n) {
             fprintf(out, ")");
             break;
         case N_BINOP:
-            if (strcmp(n->sval, "neg") == 0) {
+            if (strcmp(n->sval, "neg") == 0) { // 
                 fprintf(out, "(-");       // Print the minus sign FIRST
                 gen_expr(out, n->left);   // Then print the number
                 fprintf(out, ")");
@@ -271,14 +270,14 @@ void gen_stmt(FILE *out, Node *s, int indent) {
     switch (s->type) {
         case N_DECL:
             fprintf(out, "int %s", s->sval);
-            if (s->left) {
+            if (s->left) { // int x;
                  fprintf(out, " = ");
                  gen_expr(out, s->left);
             }
             fprintf(out, ";\n");
             break;
         case N_PRINT:
-            /* Standard integer print */
+            /* Standard integer print */ 
             fprintf(out, "printf(\"%%d\\n\", "); gen_expr(out, s->left); fprintf(out, ");\n");
             break;
         case N_PRINT_STR:

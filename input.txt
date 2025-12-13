@@ -1,7 +1,6 @@
-int _joo = 5 + -1;
-int ezzat = 6 * 2 + -1;
-if(_joo <= ezzat){
-    print("ezzat");
-}else{
-    print("youssef");
-}
+int x = 5;
+int y;
+int z;
+y = z = x;
+print(y);
+print(z);

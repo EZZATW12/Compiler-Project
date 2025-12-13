@@ -2,12 +2,11 @@
 #include <stdlib.h>
 
 int main() {
-    int _joo = (5 + (-1));
-    int ezzat = ((6 * 2) + (-1));
-    if ((_joo <= ezzat)) {
-        printf("%s\n", "ezzat");
-    } else {
-        printf("%s\n", "youssef");
-    }
-        return 0;
+    int x = 5;
+    int y;
+    int z;
+    (y = (z = x));
+    printf("%d\n", y);
+    printf("%d\n", z);
+    return 0;
 }
